@@ -1,0 +1,11 @@
+.cocktail-card { display:flex; flex-direction:column; }
+.cocktail-card .card-open { margin-top:auto; align-self:flex-start; }
+.cocktail-profile-heading { align-items:start; }
+.cocktail-profile-heading h3 { font-size:clamp(2rem, 5vw, 3.4rem); margin-top:6px; }
+.cocktail-profile-heading > p { max-width:560px; font-size:1rem; }
+.service-block { margin-top:18px; padding-top:10px; border-top:1px solid rgba(255,255,255,.05); }
+.service-block p { margin:8px 0; }
+@media (max-width:600px) {
+  .cocktail-card .card-open { width:100%; }
+  .cocktail-profile-heading h3 { font-size:2.2rem; }
+}
