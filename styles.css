@@ -71,6 +71,8 @@ a { color: inherit; }
 .card { background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:18px; min-height:170px; transition:.18s ease; }
 .card:hover { transform:translateY(-2px); border-color:#424947; }
 .card h4 { margin:6px 0 8px; font-family:Georgia, "Times New Roman", serif; font-size:1.2rem; font-weight:500; }
+.ingredient-card { display:flex; flex-direction:column; }
+.ingredient-card .card-open { margin-top:auto; align-self:flex-start; }
 .meta { color:var(--muted); font-size:.86rem; }
 .tags { display:flex; flex-wrap:wrap; gap:6px; margin-top:12px; }
 .tag { font-size:.75rem; color:#d7ddd8; background:#222626; border:1px solid #303635; border-radius:999px; padding:4px 7px; }
@@ -96,10 +98,25 @@ a { color: inherit; }
 .relationship .verb { color:var(--accent); font-size:.8rem; text-transform:uppercase; letter-spacing:.1em; text-align:center; }
 .relationship small { display:block; color:var(--muted); grid-column:1/-1; border-top:1px solid rgba(255,255,255,.05); padding-top:10px; }
 .empty { color:var(--muted); padding:30px; text-align:center; border:1px dashed var(--line); border-radius:14px; grid-column:1/-1; }
+.profile-actions { margin:4px 0 18px; }
+.profile-heading { align-items:start; }
+.profile-heading h3 { font-size:clamp(2rem, 5vw, 3.4rem); margin-top:6px; }
+.profile-heading > p { max-width:540px; font-size:1rem; }
+.ingredient-profile-top { margin-top:18px; }
+.profile-section { margin-top:22px; }
+.profile-section h5 { margin:0; color:var(--muted); font-size:.74rem; text-transform:uppercase; letter-spacing:.12em; }
+.profile-grid { display:grid; grid-template-columns:repeat(3, 1fr); gap:16px; margin-top:16px; }
+.profile-panel { min-height:220px; }
+.profile-panel h4 { margin-top:6px; }
+.detail-list { margin:0; padding-left:18px; color:var(--muted); }
+.detail-list li { margin:0 0 10px; padding-left:4px; }
+.caution-panel { border-color:rgba(215,125,104,.28); }
+.caution-panel .eyebrow { color:var(--danger); }
 .footer { margin-top:36px; color:#777f7b; font-size:.78rem; text-align:center; }
 @media (max-width: 860px) {
   .hero, .two-col { grid-template-columns:1fr; }
   .grid { grid-template-columns:repeat(2, 1fr); }
+  .profile-grid { grid-template-columns:1fr 1fr; }
   .topbar-inner { align-items:flex-start; }
   .nav { max-width:55%; }
 }
@@ -112,10 +129,14 @@ a { color: inherit; }
   .brand small { display:none; }
   .hero-copy { padding:22px; min-height:240px; }
   .hero-card { padding:20px; }
-  .grid { grid-template-columns:1fr; }
+  .grid, .profile-grid { grid-template-columns:1fr; }
   .section-head { display:block; }
   .section-head p { margin-top:6px; }
   .relationship { grid-template-columns:1fr; }
   .relationship .verb { text-align:left; }
   .spec-row, .function-row { grid-template-columns:90px 1fr; }
+  .profile-actions .chip { width:100%; }
+  .profile-heading h3 { font-size:2.2rem; }
+  .profile-panel { min-height:0; }
+  .ingredient-card .card-open { width:100%; }
 }
