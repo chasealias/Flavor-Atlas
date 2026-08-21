@@ -9,6 +9,13 @@ navButton = function(view, label) {
   return `<button data-nav="${view}" class="${active ? 'active' : ''}">${label}</button>`;
 };
 
+const baseLayoutForCocktails = layout;
+layout = function(content) {
+  baseLayoutForCocktails(content);
+  const footer = document.querySelector('.footer');
+  if (footer) footer.textContent = 'Flavor Atlas V0.3 · Recipes record outcomes. Flavor Atlas records reasoning.';
+};
+
 function cocktailTags(items = []) {
   return `<div class="tags">${items.map(item => `<span class="tag">${esc(item)}</span>`).join('')}</div>`;
 }
