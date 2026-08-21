@@ -3,17 +3,19 @@ const DATA = window.FLAVOR_ATLAS_DATA;
 const state = {
   view: 'home',
   ingredientQuery: '',
-  roleFilter: 'All'
+  roleFilter: 'All',
+  selectedIngredientId: null
 };
 
 const app = document.querySelector('#app');
 
 function esc(value = '') {
-  return String(value).replace(/[&<>"]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch]));
+  return String(value).replace(/[&<>\"]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;'}[ch]));
 }
 
 function navButton(view, label) {
-  return `<button data-nav="${view}" class="${state.view === view ? 'active' : ''}">${label}</button>`;
+  const active = state.view === view || (view === 'ingredients' && state.view === 'ingredient');
+  return `<button data-nav="${view}" class="${active ? 'active' : ''}">${label}</button>`;
 }
 
 function layout(content) {
@@ -34,12 +36,13 @@ function layout(content) {
         </div>
       </header>
       ${content}
-      <footer class="footer">Flavor Atlas V1 · Recipes record outcomes. Flavor Atlas records reasoning.</footer>
+      <footer class="footer">Flavor Atlas V0.2 · Recipes record outcomes. Flavor Atlas records reasoning.</footer>
     </div>`;
 
   document.querySelectorAll('[data-nav]').forEach(btn => {
     btn.addEventListener('click', () => {
       state.view = btn.dataset.nav;
+      state.selectedIngredientId = null;
       render();
       window.scrollTo({top:0, behavior:'smooth'});
     });
@@ -71,15 +74,25 @@ function metricBars(vector) {
     </div>`).join('');
 }
 
+function tags(items = [], className = '') {
+  return `<div class="tags">${items.map(item => `<span class="tag ${className}">${esc(item)}</span>`).join('')}</div>`;
+}
+
+function detailList(items = [], emptyText = 'No entries yet.') {
+  if (!items.length) return `<p class="meta">${esc(emptyText)}</p>`;
+  return `<ul class="detail-list">${items.map(item => `<li>${esc(item)}</li>`).join('')}</ul>`;
+}
+
 function ingredientCard(ing) {
   return `
-    <article class="card">
+    <article class="card ingredient-card">
       <div class="meta">${esc(ing.id)} · ${esc(ing.category)}</div>
       <h4>${esc(ing.name)}</h4>
       <div class="meta">${esc(ing.region)}</div>
-      <div class="tags">${ing.roles.map(r => `<span class="tag role">${esc(r)}</span>`).join('')}</div>
-      <div class="tags">${ing.flavors.slice(0,4).map(f => `<span class="tag">${esc(f)}</span>`).join('')}</div>
+      ${tags(ing.roles, 'role')}
+      ${tags(ing.flavors.slice(0,4))}
       <p class="meta">${esc(ing.notes)}</p>
+      <button class="chip card-open" data-ingredient-id="${esc(ing.id)}" aria-label="Open ${esc(ing.name)} profile">Open profile</button>
     </article>`;
 }
 
@@ -113,12 +126,24 @@ function renderIngredients() {
   const q = state.ingredientQuery.trim().toLowerCase();
   const filtered = DATA.ingredients.filter(ing => {
     const roleOk = state.roleFilter === 'All' || ing.roles.includes(state.roleFilter);
-    const haystack = [ing.name, ing.category, ing.region, ing.notes, ...ing.roles, ...ing.flavors, ...ing.aroma, ...ing.texture].join(' ').toLowerCase();
+    const haystack = [
+      ing.name,
+      ing.category,
+      ing.region,
+      ing.notes,
+      ...ing.roles,
+      ...ing.flavors,
+      ...ing.aroma,
+      ...ing.texture,
+      ...(ing.pairings || []),
+      ...(ing.substitutes || []),
+      ...(ing.cautions || [])
+    ].join(' ').toLowerCase();
     return roleOk && (!q || haystack.includes(q));
   });
 
   layout(`
-    <div class="section-head"><div><span class="eyebrow">Ingredient Explorer</span><h3>Search by flavor and function</h3></div><p>V1 uses seeded local data. The structure is intentionally ready for a database later.</p></div>
+    <div class="section-head"><div><span class="eyebrow">Ingredient Explorer</span><h3>Search by flavor and function</h3></div><p>Search names, roles, sensory notes, pairings, substitutes and cautions.</p></div>
     <div class="searchbar"><input id="ingredient-search" value="${esc(state.ingredientQuery)}" placeholder="Try: earthy, bridge, fortified wine, honey…" aria-label="Search ingredients"></div>
     <div class="filters">
       ${['All','Foundation','Structure','Bridge','Modifier','Sweetener','Aromatic','Dynamic Modifier'].map(role => `<button class="chip ${state.roleFilter===role?'active':''}" data-role="${esc(role)}">${esc(role)}</button>`).join('')}
@@ -128,8 +153,98 @@ function renderIngredients() {
     </section>`);
 
   const input = document.querySelector('#ingredient-search');
-  input.addEventListener('input', (e) => { state.ingredientQuery = e.target.value; renderIngredients(); requestAnimationFrame(() => { const next=document.querySelector('#ingredient-search'); next.focus(); next.setSelectionRange(next.value.length,next.value.length); }); });
-  document.querySelectorAll('[data-role]').forEach(btn => btn.addEventListener('click', () => { state.roleFilter = btn.dataset.role; renderIngredients(); }));
+  input.addEventListener('input', (e) => {
+    state.ingredientQuery = e.target.value;
+    renderIngredients();
+    requestAnimationFrame(() => {
+      const next = document.querySelector('#ingredient-search');
+      next.focus();
+      next.setSelectionRange(next.value.length, next.value.length);
+    });
+  });
+
+  document.querySelectorAll('[data-role]').forEach(btn => btn.addEventListener('click', () => {
+    state.roleFilter = btn.dataset.role;
+    renderIngredients();
+  }));
+
+  document.querySelectorAll('[data-ingredient-id]').forEach(btn => btn.addEventListener('click', () => {
+    state.selectedIngredientId = btn.dataset.ingredientId;
+    state.view = 'ingredient';
+    render();
+    window.scrollTo({top:0, behavior:'smooth'});
+  }));
+}
+
+function renderIngredientProfile() {
+  const ing = DATA.ingredients.find(item => item.id === state.selectedIngredientId);
+  if (!ing) {
+    state.view = 'ingredients';
+    state.selectedIngredientId = null;
+    return renderIngredients();
+  }
+
+  layout(`
+    <div class="profile-actions">
+      <button class="chip" data-back-ingredients>← Back to Ingredient Explorer</button>
+    </div>
+
+    <div class="section-head profile-heading">
+      <div>
+        <span class="eyebrow">${esc(ing.id)} · ${esc(ing.category)}</span>
+        <h3>${esc(ing.name)}</h3>
+        <p class="meta">${esc(ing.region)}</p>
+      </div>
+      <p>${esc(ing.notes)}</p>
+    </div>
+
+    <section class="two-col ingredient-profile-top">
+      <div class="panel">
+        <h4>Flavor Vector</h4>
+        ${metricBars(ing.vector)}
+      </div>
+      <div class="panel">
+        <h4>Functional Roles</h4>
+        ${tags(ing.roles, 'role')}
+        <div class="profile-section">
+          <h5>Flavor</h5>
+          ${tags(ing.flavors)}
+        </div>
+        <div class="profile-section">
+          <h5>Aroma</h5>
+          ${tags(ing.aroma)}
+        </div>
+        <div class="profile-section">
+          <h5>Texture</h5>
+          ${tags(ing.texture)}
+        </div>
+      </div>
+    </section>
+
+    <section class="profile-grid">
+      <article class="panel profile-panel">
+        <span class="eyebrow">Connections</span>
+        <h4>Best Pairings</h4>
+        ${detailList(ing.pairings || [], 'No pairings recorded yet.')}
+      </article>
+      <article class="panel profile-panel">
+        <span class="eyebrow">Function first</span>
+        <h4>Substitutions</h4>
+        ${detailList(ing.substitutes || [], 'No substitutes recorded yet.')}
+      </article>
+      <article class="panel profile-panel caution-panel">
+        <span class="eyebrow">Failure points</span>
+        <h4>Watch Out</h4>
+        ${detailList(ing.cautions || [], 'No cautions recorded yet.')}
+      </article>
+    </section>`);
+
+  document.querySelector('[data-back-ingredients]').addEventListener('click', () => {
+    state.view = 'ingredients';
+    state.selectedIngredientId = null;
+    render();
+    window.scrollTo({top:0, behavior:'smooth'});
+  });
 }
 
 function renderCocktails() {
@@ -164,6 +279,7 @@ function renderRelationships() {
 
 function render() {
   if (state.view === 'ingredients') return renderIngredients();
+  if (state.view === 'ingredient') return renderIngredientProfile();
   if (state.view === 'cocktails') return renderCocktails();
   if (state.view === 'relationships') return renderRelationships();
   return renderHome();
