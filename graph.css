@@ -1,0 +1,55 @@
+.graph-toolbar { display:grid; grid-template-columns:auto minmax(220px, 360px) 1fr; gap:14px; align-items:center; margin-bottom:16px; }
+.graph-toolbar label { color:var(--muted); font-size:.82rem; text-transform:uppercase; letter-spacing:.1em; }
+.graph-toolbar select { width:100%; background:var(--panel-2); border:1px solid var(--line); color:var(--text); border-radius:12px; padding:11px 12px; outline:none; }
+.graph-toolbar select:focus { border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft); }
+.graph-key { display:flex; gap:14px; flex-wrap:wrap; justify-content:flex-end; color:var(--muted); font-size:.78rem; }
+.graph-key span { display:flex; align-items:center; gap:7px; }
+.key-dot { width:10px; height:10px; border-radius:50%; background:var(--accent); display:inline-block; }
+.key-line { width:24px; height:2px; background:var(--green); display:inline-block; }
+.graph-layout { display:grid; grid-template-columns:minmax(0, 1.35fr) minmax(300px, .65fr); gap:16px; }
+.graph-panel { overflow:hidden; }
+.graph-panel-head { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.graph-panel-head h4 { margin:4px 0 0; }
+.flavor-graph { width:100%; height:auto; display:block; margin:4px 0; overflow:visible; }
+.graph-edge { stroke:#454c49; stroke-width:2; opacity:.72; }
+.graph-edge.pairing-edge { stroke:var(--green); stroke-width:3; opacity:.9; }
+.graph-score { fill:#8d9691; font-size:12px; text-anchor:middle; paint-order:stroke; stroke:var(--panel); stroke-width:5px; stroke-linejoin:round; }
+.graph-node circle { fill:#1b1f1e; stroke:#48504d; stroke-width:2; transition:.18s ease; }
+.graph-node text { fill:var(--text); font-size:12px; text-anchor:middle; pointer-events:none; }
+.graph-node .node-meta { fill:var(--muted); font-size:10px; }
+.graph-node-related { cursor:pointer; }
+.graph-node-related:hover circle, .graph-node-related:focus circle { stroke:var(--accent); stroke-width:3; fill:#232725; }
+.graph-node-related:focus { outline:none; }
+.graph-node-center circle { fill:rgba(212,163,91,.12); stroke:var(--accent); stroke-width:3; }
+.graph-node-center text { font-size:13px; font-weight:600; }
+.graph-help { text-align:center; margin:2px 0 0; }
+.recorded-relations { margin-top:18px; padding-top:16px; border-top:1px solid rgba(255,255,255,.06); display:grid; gap:8px; }
+.reason-note { background:#121414; border:1px solid #282d2c; border-radius:12px; padding:11px 12px; display:grid; gap:4px; }
+.reason-note strong { font-size:.86rem; }
+.reason-note span { color:var(--muted); font-size:.8rem; }
+.substitution-panel > h4 { margin:6px 0 8px; }
+.sub-list { display:grid; gap:9px; margin-top:16px; }
+.sub-card { width:100%; display:grid; grid-template-columns:28px 1fr auto; align-items:center; gap:10px; text-align:left; background:#121414; border:1px solid var(--line); border-radius:13px; padding:12px; color:var(--text); }
+.sub-card:hover, .sub-card:focus { border-color:var(--accent); background:#181b1a; outline:none; }
+.sub-rank { width:26px; height:26px; display:grid; place-items:center; border-radius:50%; background:var(--accent-soft); color:#f0cf9c; font-size:.76rem; font-weight:700; }
+.sub-copy { display:grid; gap:3px; }
+.sub-copy strong { font-size:.92rem; }
+.sub-copy small { color:var(--muted); line-height:1.35; }
+.sub-score { color:var(--accent); font-size:.84rem; font-weight:700; }
+.authored-subs { margin-top:18px; padding-top:15px; border-top:1px solid rgba(255,255,255,.06); }
+.authored-subs h5 { margin:0 0 8px; color:var(--muted); text-transform:uppercase; letter-spacing:.1em; font-size:.72rem; }
+.caution-notes h5 { color:var(--danger); }
+@media (max-width:900px) {
+  .graph-layout { grid-template-columns:1fr; }
+  .graph-toolbar { grid-template-columns:1fr 1fr; }
+  .graph-key { grid-column:1/-1; justify-content:flex-start; }
+}
+@media (max-width:600px) {
+  .graph-toolbar { grid-template-columns:1fr; }
+  .graph-key { grid-column:auto; }
+  .graph-panel { padding:14px 8px; }
+  .flavor-graph { margin:0; }
+  .graph-node text { font-size:11px; }
+  .graph-score { font-size:10px; }
+  .sub-card { grid-template-columns:26px 1fr auto; padding:11px 10px; }
+}
