@@ -48,7 +48,7 @@
       tags: ['house original','Greek gin','prickly pear','egg white','fruit sour']
     },
     {
-      name: 'Pandora’s Box',
+      name: "Pandora's Box",
       family: 'Lychee fruit sour',
       intent: 'A vivid lychee and prickly-pear sour with vanilla, saline lift, ume aromatics, and a controlled grenadine finish.',
       specs: [
