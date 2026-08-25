@@ -1,0 +1,56 @@
+.relationship-tabs { display:flex; gap:8px; margin-bottom:16px; }
+.family-toolbar { display:grid; grid-template-columns:auto minmax(280px, 1fr) auto; gap:12px; align-items:center; margin-bottom:16px; }
+.family-toolbar label { color:var(--muted); font-size:.78rem; text-transform:uppercase; letter-spacing:.1em; }
+.family-toolbar select { width:100%; background:var(--panel-2); border:1px solid var(--line); color:var(--text); border-radius:12px; padding:11px 12px; outline:none; }
+.family-toolbar select:focus { border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft); }
+.family-graph-layout { display:grid; grid-template-columns:minmax(0,1.4fr) minmax(300px,.6fr); gap:16px; }
+.family-graph-panel { overflow:hidden; }
+.cocktail-family-graph { width:100%; height:auto; display:block; margin:4px 0; overflow:visible; }
+.family-edge { stroke:#4a504e; stroke-width:2.2; opacity:.82; }
+.family-parent-edge { stroke:var(--accent); }
+.family-child-edge { stroke:var(--green); }
+.family-peer-edge { stroke:#5f6663; stroke-dasharray:6 6; opacity:.65; }
+.family-edge-label { fill:#8d9691; font-size:10px; text-anchor:middle; paint-order:stroke; stroke:var(--panel); stroke-width:5px; stroke-linejoin:round; }
+.family-node circle { fill:#1b1f1e; stroke:#48504d; stroke-width:2; transition:.18s ease; }
+.family-node text { fill:var(--text); font-size:11px; text-anchor:middle; pointer-events:none; }
+.family-node .node-meta { fill:var(--muted); font-size:8px; }
+.family-node-related { cursor:pointer; }
+.family-node-related:hover circle, .family-node-related:focus circle { stroke:var(--accent); stroke-width:3; fill:#232725; }
+.family-node-related:focus { outline:none; }
+.family-node-center circle { fill:rgba(212,163,91,.12); stroke:var(--accent); stroke-width:3; }
+.family-node-center text { font-size:13px; font-weight:600; }
+.family-definition-panel > h4 { margin:6px 0 8px; }
+.family-formula { margin:0 0 8px; font-size:1rem; color:var(--text); }
+.family-stat { display:flex; align-items:baseline; gap:10px; border-top:1px solid rgba(255,255,255,.06); padding:12px 0; }
+.family-stat strong { color:var(--accent); font-size:1.45rem; }
+.family-stat span { color:var(--muted); font-size:.8rem; }
+.lineage-notes { display:grid; gap:8px; margin-top:16px; padding-top:14px; border-top:1px solid rgba(255,255,255,.06); }
+.lineage-notes h5 { margin:0 0 2px; text-transform:uppercase; letter-spacing:.1em; font-size:.7rem; color:var(--muted); }
+.lineage-note { width:100%; display:grid; gap:4px; text-align:left; background:#121414; border:1px solid var(--line); border-radius:12px; padding:11px 12px; color:var(--text); }
+.lineage-note:hover, .lineage-note:focus { border-color:var(--accent); background:#181b1a; outline:none; }
+.lineage-note strong { font-size:.84rem; }
+.lineage-note span { color:var(--accent); font-size:.72rem; text-transform:uppercase; letter-spacing:.06em; }
+.lineage-note small { color:var(--muted); line-height:1.4; }
+.lineage-note.compact { margin-top:8px; }
+.lineage-empty { margin-top:16px; padding-top:14px; border-top:1px solid rgba(255,255,255,.06); }
+.family-index-heading { margin-top:24px; }
+.family-card-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; }
+.family-card { min-height:112px; display:grid; grid-template-columns:auto 1fr; grid-template-rows:auto auto 1fr; column-gap:10px; text-align:left; background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:14px; color:var(--text); }
+.family-card:hover, .family-card:focus, .family-card.active { border-color:var(--accent); background:#181b1a; outline:none; }
+.family-count { grid-row:1/3; min-width:34px; height:34px; display:grid; place-items:center; border-radius:50%; background:var(--accent-soft); color:#f0cf9c; font-size:.82rem; font-weight:700; }
+.family-card strong { font-size:.9rem; }
+.family-card small { grid-column:2; color:var(--muted); line-height:1.35; margin-top:4px; }
+.family-profile-heading { margin-top:24px; }
+@media (max-width:900px) {
+  .family-graph-layout { grid-template-columns:1fr; }
+  .family-card-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+}
+@media (max-width:650px) {
+  .relationship-tabs { display:grid; grid-template-columns:1fr 1fr; }
+  .family-toolbar { grid-template-columns:1fr; }
+  .family-card-grid { grid-template-columns:1fr; }
+  .family-graph-panel { padding:14px 6px; }
+  .family-edge-label { font-size:8px; }
+  .family-node text { font-size:10px; }
+  .family-node .node-meta { font-size:7px; }
+}
