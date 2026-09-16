@@ -5,13 +5,16 @@ Mobile-first cigar and cocktail pairing MVP built inside Flavor Atlas.
 ## Current MVP
 
 - Start with either a cigar or a cocktail
-- Search the cigar and cocktail libraries
+- Automatic ranked recommendations after the first selection
+- Search cigar and cocktail libraries
 - Deterministic pairing score
-- Flavor bridge, intensity, useful contrast, and palate-structure breakdown
-- Plain-language explanation of why the pairing works
+- Flavor bridge, intensity, useful contrast, palate structure, and preference components
+- Plain-language explanation of why each pairing works
 - Save ratings and tasting notes in localStorage
+- Saved ratings influence previously rated pairings
 - Mobile bottom navigation
 - PWA-ready metadata
+- Verified cigar blend / size / tasting-note source links displayed in the app
 
 ## Pairing model
 
@@ -21,15 +24,26 @@ The prototype score uses:
 - 30% flavor bridge / complementary overlap
 - 20% useful contrast
 - 10% palate-cleansing structure
-- 10% neutral user-preference prior
+- 10% user preference
 
-The preference portion is deliberately simple in V0.1. Saved ratings provide the foundation for a learned preference modifier later.
+For unrated combinations, the preference term begins from a neutral prior. Previously rated exact pairings can move up or down in later rankings.
 
-## Sample data
+## Current cigar profiles
 
-The cocktail specs include Negroni, Old Fashioned, New York Sour, Martini, and Toki Umamier.
+- ADVentura The Explorer Robusto Grande
+- Zino Nicaragua Robusto
+- La Aroma de Cuba Connecticut Robusto
+- Aganorsa Leaf Signature Corojo Robusto
 
-Cigar flavor profiles are labeled as sample/demo data until they are verified against manufacturer information and tasting records.
+Blend, wrapper, format, strength/body context, and tasting-note facts are sourced from manufacturer pages or established cigar references. The 0–5 flavor vectors are Puff ’n Pour model encodings of those documented notes rather than manufacturer ratings.
+
+## Current cocktails
+
+- Toki Umamier
+- Negroni
+- Old Fashioned
+- New York Sour
+- Martini
 
 ## Run
 
