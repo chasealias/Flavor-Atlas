@@ -30,10 +30,20 @@ For unrated combinations, the preference term begins from a neutral prior. Previ
 
 ## Current cigar profiles
 
+12 sourced profiles across mild, medium, and full-bodied styles:
+
 - ADVentura The Explorer Robusto Grande
 - Zino Nicaragua Robusto
 - La Aroma de Cuba Connecticut Robusto
 - Aganorsa Leaf Signature Corojo Robusto
+- Caldwell Blind Man’s Bluff Connecticut Robusto
+- Caldwell Blind Man’s Bluff Habano Robusto
+- Foundation The Tabernacle Havana Seed CT No. 142 Robusto
+- Drew Estate Liga Privada No. 9 Robusto
+- Perdomo Reserve 10th Anniversary Champagne Robusto
+- Perdomo Reserve 10th Anniversary Maduro Robusto
+- Oliva Serie V Melanio Robusto
+- My Father Le Bijou 1922 Petit Robusto
 
 Blend, wrapper, format, strength/body context, and tasting-note facts are sourced from manufacturer pages or established cigar references. The 0–5 flavor vectors are Puff ’n Pour model encodings of those documented notes rather than manufacturer ratings.
 
