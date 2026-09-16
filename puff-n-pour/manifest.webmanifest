@@ -1,0 +1,9 @@
+{
+  "name": "Puff ’n Pour",
+  "short_name": "Puff n Pour",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#0b100e",
+  "theme_color": "#0b100e",
+  "description": "Cigar and cocktail pairing by flavor, intensity, complement and contrast."
+}
