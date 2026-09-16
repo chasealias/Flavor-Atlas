@@ -39,24 +39,80 @@ window.PNP_DATA = {
   ],
   cigars: [
     {
-      id:"adventura-demo", brand:"Adventura", name:"Adventura — Demo Profile", wrapper:"Nicaraguan-style demo", vitola:"Robusto", strength:3, body:4, demo:true,
-      flavor:{sweet:1,bitter:1,acidic:0,savory:2,smoky:2,woody:5,earthy:4,nutty:4,spicy:3,floral:0,herbal:1,fruity:1,creamy:2,roasted:4,mineral:1},
-      note:"Sample profile: cedar, roasted nuts, earth, cocoa-like roast and pepper."
+      id:"adventura-explorer-robusto-grande",
+      brand:"ADVentura",
+      name:"The Explorer Robusto Grande",
+      wrapper:"Mexican",
+      binder:"Ecuador Sumatra",
+      filler:"Dominican Republic + Ecuador",
+      origin:"Dominican Republic",
+      vitola:"Robusto Grande · 5 × 54",
+      strength:3,
+      body:3,
+      verified:true,
+      flavor:{sweet:2,bitter:2,acidic:0,savory:2,smoky:1,woody:4,earthy:3,nutty:4,spicy:3,floral:0,herbal:0,fruity:0,creamy:1,roasted:4,mineral:0},
+      note:"Medium-bodied with dark chocolate, spice, nuts, leather, earth and woody sweetness.",
+      sources:[
+        {label:"ADVentura — The Explorer Core Line",url:"https://www.adventuracigars.com/post/the-explorer-core-line"},
+        {label:"ADVentura — The Explorer",url:"https://www.adventuracigars.com/theexplorer"}
+      ]
     },
     {
-      id:"zino-nicaragua", brand:"Zino", name:"Zino Nicaragua", wrapper:"Nicaragua", vitola:"Robusto", strength:3, body:3, demo:true,
-      flavor:{sweet:2,bitter:1,acidic:0,savory:1,smoky:1,woody:4,earthy:3,nutty:4,spicy:3,floral:1,herbal:1,fruity:2,creamy:3,roasted:3,mineral:0},
-      note:"Sample profile: cedar, nuts, warm spice, cream and light fruit."
+      id:"zino-nicaragua-robusto",
+      brand:"Zino",
+      name:"Zino Nicaragua Robusto",
+      wrapper:"Ecuador Connecticut",
+      binder:"Nicaragua",
+      filler:"Honduras + Nicaragua + Dominican Republic",
+      origin:"Honduras",
+      vitola:"Robusto · 5 × 54",
+      strength:3,
+      body:3,
+      verified:true,
+      flavor:{sweet:2,bitter:1,acidic:0,savory:1,smoky:1,woody:4,earthy:3,nutty:4,spicy:3,floral:0,herbal:0,fruity:0,creamy:4,roasted:4,mineral:1},
+      note:"Medium-bodied profile with cedar, coffee, dark chocolate, cream, spice, earth and natural sweetness.",
+      sources:[
+        {label:"Davidoff — Zino Nicaragua",url:"https://us.davidoffgeneva.com/discover/zino"},
+        {label:"Cigars International — Zino Nicaragua",url:"https://www.cigarsinternational.com/product/ZND-PM.html"}
+      ]
     },
     {
-      id:"aroma-ct", brand:"La Aroma de Cuba", name:"La Aroma de Cuba Connecticut", wrapper:"Connecticut", vitola:"Robusto", strength:2, body:3, demo:true,
-      flavor:{sweet:3,bitter:0,acidic:0,savory:1,smoky:1,woody:3,earthy:2,nutty:4,spicy:2,floral:1,herbal:0,fruity:1,creamy:5,roasted:2,mineral:0},
-      note:"Sample profile: cream, toasted nuts, cedar and gentle baking spice."
+      id:"aroma-connecticut-robusto",
+      brand:"La Aroma de Cuba",
+      name:"Connecticut Robusto",
+      wrapper:"Ecuador Connecticut",
+      binder:"Nicaragua",
+      filler:"Nicaragua",
+      origin:"Nicaragua",
+      vitola:"Robusto · 5.25 × 54",
+      strength:2,
+      body:3,
+      verified:true,
+      flavor:{sweet:3,bitter:1,acidic:0,savory:1,smoky:0,woody:4,earthy:1,nutty:5,spicy:1,floral:0,herbal:0,fruity:0,creamy:5,roasted:4,mineral:0},
+      note:"Mild-medium with almond, cashew, cedar, coffee bean and buttercream before a soft finish.",
+      sources:[
+        {label:"La Aroma de Cuba — Connecticut",url:"https://www.laaromadecuba.com/cigars/la-aroma-de-cuba-cigars/la-aroma-de-cuba-connecticut"}
+      ]
     },
     {
-      id:"aganorsa-demo", brand:"Aganorsa Leaf", name:"Aganorsa Leaf — Demo Profile", wrapper:"Nicaraguan-style demo", vitola:"Toro", strength:4, body:4, demo:true,
-      flavor:{sweet:1,bitter:2,acidic:0,savory:2,smoky:2,woody:4,earthy:5,nutty:3,spicy:5,floral:0,herbal:1,fruity:1,creamy:1,roasted:4,mineral:2},
-      note:"Sample profile: earth, pepper, cedar, roast and mineral depth."
+      id:"aganorsa-signature-corojo-robusto",
+      brand:"Aganorsa Leaf",
+      name:"Signature Corojo Robusto",
+      wrapper:"Aganorsa Corojo · Nicaragua",
+      binder:"Aganorsa · Nicaragua",
+      filler:"Aganorsa Nicaragua + medio tiempo",
+      origin:"Nicaragua",
+      vitola:"Robusto · 5 × 52",
+      strength:4,
+      body:4,
+      verified:true,
+      flavor:{sweet:2,bitter:2,acidic:1,savory:2,smoky:1,woody:4,earthy:4,nutty:4,spicy:5,floral:0,herbal:1,fruity:1,creamy:2,roasted:4,mineral:1},
+      note:"Medium-full model profile: white pepper, baking spice, cocoa, nuts, cedar, earth, toast and leather.",
+      sources:[
+        {label:"Aganorsa Leaf — Signature Corojo",url:"https://aganorsaleaf.com/cigars/aganorsa-leaf-signature-corojo/"},
+        {label:"Cigar Advisor — Aganorsa Guide",url:"https://www.famous-smoke.com/cigaradvisor/buying-guides/cigar-advisor-guide-aganorsa-cigars"}
+      ]
     }
-  ]
+  ],
+  dataNote:"Wrapper, blend, size and tasting-note facts are sourced from manufacturer or established cigar references. The 0–5 flavor vectors are Puff ’n Pour model encodings of those documented notes, not manufacturer ratings."
 };
