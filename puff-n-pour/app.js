@@ -1,6 +1,7 @@
 const D = window.PNP_DATA;
 const app = document.querySelector("#app");
 const STORE_KEY = "pnp-saved-v1";
+const RESEARCH_KEY = "pnp-researched-profiles-v1";
 
 const state = {
   view: "pair",
@@ -9,8 +10,14 @@ const state = {
   selectedCocktail: null,
   cigarQuery: "",
   cocktailQuery: "",
-  saved: JSON.parse(localStorage.getItem(STORE_KEY) || "[]")
+  saved: JSON.parse(localStorage.getItem(STORE_KEY) || "[]"),
+  researched: JSON.parse(localStorage.getItem(RESEARCH_KEY) || "[]")
 };
+
+state.researched.forEach(function(profile){
+  const list = profile.kind === "cigar" ? D.cigars : D.cocktails;
+  if(!list.some(function(x){return x.id === profile.id;})) list.push(profile);
+});
 
 function esc(v) {
   return String(v == null ? "" : v).replace(/[&<>"]/g, function(c) {
@@ -198,19 +205,112 @@ function renderPair(){
 
 function listCard(item,type,ranking){
   const meta = type === "cigar"
-    ? item.wrapper + " · Strength " + item.strength + "/5"
-    : item.base + " · " + item.style;
+    ? (item.wrapper || "Wrapper unknown") + " · Strength " + (item.strength || item.body || "?") + "/5"
+    : (item.base || "Custom build") + " · " + (item.style || "Cocktail");
 
   const kicker = type === "cigar" ? item.brand : item.style;
   const rank = ranking
     ? '<div class="rankbadge">' + (ranking.rank === 1 ? 'Best match · ' : '#' + ranking.rank + ' · ') + ranking.score + '%</div>'
     : '';
-  const verified = type === "cigar" && item.verified ? '<span class="verified">Verified profile</span>' : '';
+  const verified = item.researchedByAI
+    ? '<span class="verified ai-profile">AI researched · ' + esc(item.confidence || "web") + ' confidence</span>'
+    : (type === "cigar" && item.verified ? '<span class="verified">Sourced profile</span>' : '');
 
   return '<button class="listcard ' + (ranking && ranking.rank===1 ? 'topmatch' : '') + '" data-pick-' + type + '="' + item.id + '">' +
-    '<div>' + rank + '<span class="micro">' + esc(kicker) + '</span><h3>' + esc(item.name) + '</h3><p>' + esc(meta) + '</p>' + verified + '</div>' +
+    '<div>' + rank + '<span class="micro">' + esc(kicker || type) + '</span><h3>' + esc(item.name) + '</h3><p>' + esc(meta) + '</p>' + verified + '</div>' +
     '<div class="tags">' + tags(item.flavor) + '</div>' +
   '</button>';
+}
+
+function researchBox(kind){
+  const noun = kind === "cigar" ? "cigar" : "cocktail";
+  const placeholder = kind === "cigar"
+    ? "Try: Padrón 1964 Anniversary Maduro Torpedo"
+    : "Try: Boulevardier, or paste your own recipe";
+  return '<section class="researchbox">' +
+    '<span class="eyebrow">Search beyond the library</span>' +
+    '<h2>Research any ' + noun + '</h2>' +
+    '<p>Enter a name or recipe. Puff ’n Pour will research it, build a Flavor Atlas profile, cite the sources, and remember it on this device.</p>' +
+    '<form data-research-form="' + kind + '">' +
+      '<input data-research-input="' + kind + '" placeholder="' + esc(placeholder) + '" autocomplete="off">' +
+      '<button class="primary" type="submit">Research with AI</button>' +
+    '</form>' +
+    '<div class="researchstatus" data-research-status="' + kind + '"></div>' +
+  '</section>';
+}
+
+function cacheResearchedProfile(profile){
+  state.researched = [profile].concat(state.researched.filter(function(x){
+    return !(x.kind === profile.kind && x.id === profile.id);
+  })).slice(0,80);
+  localStorage.setItem(RESEARCH_KEY,JSON.stringify(state.researched));
+
+  const list = profile.kind === "cigar" ? D.cigars : D.cocktails;
+  const index = list.findIndex(function(x){return x.id === profile.id;});
+  if(index >= 0) list[index] = profile;
+  else list.unshift(profile);
+}
+
+async function researchProfile(kind,query){
+  const response = await fetch("/api/resolve",{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({kind:kind,query:query})
+  });
+  const data = await response.json().catch(function(){return {};});
+  if(!response.ok) throw new Error(data.error || "Research failed.");
+  if(!data.profile) throw new Error("No profile came back from research.");
+  cacheResearchedProfile(data.profile);
+  return data.profile;
+}
+
+function bindResearch(kind){
+  const form = document.querySelector('[data-research-form="' + kind + '"]');
+  if(!form) return;
+  const input = document.querySelector('[data-research-input="' + kind + '"]');
+  const status = document.querySelector('[data-research-status="' + kind + '"]');
+  const button = form.querySelector("button");
+
+  form.addEventListener("submit",async function(e){
+    e.preventDefault();
+    const query = input.value.trim();
+    if(!query) return;
+
+    button.disabled = true;
+    button.textContent = "Researching…";
+    status.className = "researchstatus working";
+    status.textContent = "Searching the web and translating tasting notes into Flavor Atlas…";
+
+    try {
+      const profile = await researchProfile(kind,query);
+      status.className = "researchstatus success";
+      status.textContent = "Profile found: " + profile.name;
+
+      if(kind === "cigar"){
+        state.selectedCigar = profile;
+        if(state.selectedCocktail){
+          state.view = "pair";
+        } else {
+          state.flow = "smoking";
+          state.view = "cocktails";
+        }
+      } else {
+        state.selectedCocktail = profile;
+        if(state.selectedCigar){
+          state.view = "pair";
+        } else {
+          state.flow = "drinking";
+          state.view = "cigars";
+        }
+      }
+      render();
+    } catch(error) {
+      status.className = "researchstatus error";
+      status.textContent = error.message + " You can still use the cached library below.";
+      button.disabled = false;
+      button.textContent = "Research with AI";
+    }
+  });
 }
 
 function renderCigars(){
@@ -237,10 +337,14 @@ function renderCigars(){
       (state.selectedCocktail ? '<p>Ranked automatically for <b>' + esc(state.selectedCocktail.name) + '</b> using flavor, intensity, contrast and palate structure.</p>' : '') +
     '</div>' +
     (state.selectedCocktail ? '<div class="contextpill">Best match is shown first. Tap any cigar to see the full pairing breakdown.</div>' : '') +
+    researchBox("cigar") +
+    '<div class="librarylabel"><span>Cached profiles</span></div>' +
     '<input class="search" id="cigar-search" value="' + esc(state.cigarQuery) + '" placeholder="Search brand, wrapper or flavor">' +
     '<div class="list">' + items.map(function(x){return listCard(x,"cigar",ranking[x.id]);}).join("") + '</div>' +
     '<p class="data-note">' + esc(D.dataNote || "") + '</p>'
   );
+
+  bindResearch("cigar");
 
   document.querySelector("#cigar-search").addEventListener("input",function(e){
     state.cigarQuery = e.target.value;
@@ -289,9 +393,13 @@ function renderCocktails(){
       (state.selectedCigar ? '<p>Ranked automatically for <b>' + esc(state.selectedCigar.name) + '</b> using the Puff ’n Pour pairing model.</p>' : '') +
     '</div>' +
     (state.selectedCigar ? '<div class="contextpill">Best match is shown first. Tap any cocktail to see the full pairing breakdown.</div>' : '') +
+    researchBox("cocktail") +
+    '<div class="librarylabel"><span>Cached profiles</span></div>' +
     '<input class="search" id="cocktail-search" value="' + esc(state.cocktailQuery) + '" placeholder="Search cocktail, spirit or flavor">' +
     '<div class="list">' + items.map(function(x){return listCard(x,"cocktail",ranking[x.id]);}).join("") + '</div>'
   );
+
+  bindResearch("cocktail");
 
   document.querySelector("#cocktail-search").addEventListener("input",function(e){
     state.cocktailQuery = e.target.value;
@@ -316,11 +424,11 @@ function renderCocktails(){
   });
 }
 
-function sourceLinks(cigar){
-  if(!cigar.sources || !cigar.sources.length) return "";
-  return '<div class="sources"><span class="micro">Profile sources</span>' +
-    cigar.sources.map(function(s){
-      return '<a href="' + esc(s.url) + '" target="_blank" rel="noopener noreferrer">' + esc(s.label) + ' ↗</a>';
+function sourceLinks(item){
+  if(!item.sources || !item.sources.length) return "";
+  return '<div class="sources"><span class="micro">Research sources</span>' +
+    item.sources.map(function(source){
+      return '<a href="' + esc(source.url) + '" target="_blank" rel="noopener noreferrer">' + esc(source.label || source.url) + ' ↗</a>';
     }).join("") +
   '</div>';
 }
@@ -361,8 +469,8 @@ function renderResult(){
       metric("Palate structure",result.cleanse) +
     '</section>' +
     '<section class="duo">' +
-      '<article><span class="micro">' + esc(cigar.brand) + '</span><h2>' + esc(cigar.name) + '</h2><p>' + esc(cigar.note) + '</p><p class="sourcefacts">' + esc(cigar.vitola) + ' · ' + esc(cigar.wrapper) + ' wrapper · ' + esc(cigar.origin) + '</p><div class="tags">' + tags(cigar.flavor) + '</div>' + sourceLinks(cigar) + '</article>' +
-      '<article><span class="micro">' + esc(cocktail.style) + '</span><h2>' + esc(cocktail.name) + '</h2><p>' + esc(cocktail.note) + '</p><ul>' + cocktail.recipe.map(function(x){return '<li>'+esc(x)+'</li>';}).join("") + '</ul></article>' +
+      '<article><span class="micro">' + esc(cigar.brand || "Cigar") + '</span><h2>' + esc(cigar.name) + '</h2><p>' + esc(cigar.note) + '</p><p class="sourcefacts">' + esc(cigar.vitola || "Vitola not confirmed") + ' · ' + esc(cigar.wrapper || "wrapper unknown") + ' · ' + esc(cigar.origin || "origin unknown") + '</p><div class="tags">' + tags(cigar.flavor) + '</div>' + sourceLinks(cigar) + '</article>' +
+      '<article><span class="micro">' + esc(cocktail.style || "Cocktail") + '</span><h2>' + esc(cocktail.name) + '</h2><p>' + esc(cocktail.note) + '</p><ul>' + (cocktail.recipe || []).map(function(x){return '<li>'+esc(x)+'</li>';}).join("") + '</ul>' + sourceLinks(cocktail) + '</article>' +
     '</section>' +
     '<section class="feedback">' +
       '<h2>How did it drink and smoke?</h2>' +
