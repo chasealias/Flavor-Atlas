@@ -115,14 +115,20 @@ function compatibility(cigar,cocktail){
     Math.min(cocktail.flavor.bitter || 0, cigar.flavor.sweet || 0) / 5
   );
 
-  const score = .30*clamp01(intensity) + .30*overlap + .20*contrast + .10*cleanse + .10*.72;
+  const savedPair = state.saved.find(function(x){
+    return x.cigarId === cigar.id && x.cocktailId === cocktail.id;
+  });
+  const preferenceMap = {love:1,good:.86,neutral:.62,nope:.12,saved:.72};
+  const preference = savedPair ? (preferenceMap[savedPair.rating] || .72) : .72;
+  const score = .30*clamp01(intensity) + .30*overlap + .20*contrast + .10*cleanse + .10*preference;
 
   return {
     score:pct(score),
     intensity:pct(intensity),
     bridge:pct(overlap),
     contrast:pct(contrast),
-    cleanse:pct(cleanse)
+    cleanse:pct(cleanse),
+    preference:pct(preference)
   };
 }
 
@@ -169,7 +175,7 @@ function renderPair(){
       '</div>' +
     '</section>' +
     '<section class="feature">' +
-      '<div><span class="eyebrow">Featured pairing</span><h2>Adventura × Toki Umamier</h2><p>Oak, roasted notes and cedar meet bitter orange, herbs and savory ponzu.</p></div>' +
+      '<div><span class="eyebrow">Featured pairing</span><h2>ADVentura The Explorer × Toki Umamier</h2><p>Dark chocolate, nuts and wood meet bitter orange, herbs, oak and savory ponzu.</p></div>' +
       '<button class="ghost" data-feature>Try it →</button>' +
     '</section>'
   );
@@ -190,33 +196,50 @@ function renderPair(){
   });
 }
 
-function listCard(item,type){
+function listCard(item,type,ranking){
   const meta = type === "cigar"
     ? item.wrapper + " · Strength " + item.strength + "/5"
     : item.base + " · " + item.style;
 
   const kicker = type === "cigar" ? item.brand : item.style;
+  const rank = ranking
+    ? '<div class="rankbadge">' + (ranking.rank === 1 ? 'Best match · ' : '#' + ranking.rank + ' · ') + ranking.score + '%</div>'
+    : '';
+  const verified = type === "cigar" && item.verified ? '<span class="verified">Verified profile</span>' : '';
 
-  return '<button class="listcard" data-pick-' + type + '="' + item.id + '">' +
-    '<div><span class="micro">' + esc(kicker) + '</span><h3>' + esc(item.name) + '</h3><p>' + esc(meta) + '</p></div>' +
+  return '<button class="listcard ' + (ranking && ranking.rank===1 ? 'topmatch' : '') + '" data-pick-' + type + '="' + item.id + '">' +
+    '<div>' + rank + '<span class="micro">' + esc(kicker) + '</span><h3>' + esc(item.name) + '</h3><p>' + esc(meta) + '</p>' + verified + '</div>' +
     '<div class="tags">' + tags(item.flavor) + '</div>' +
   '</button>';
 }
 
 function renderCigars(){
   const q = state.cigarQuery.toLowerCase();
-  const items = D.cigars.filter(function(c){
-    return [c.brand,c.name,c.wrapper,c.note].concat(Object.keys(c.flavor)).join(" ").toLowerCase().includes(q);
+  let items = D.cigars.filter(function(c){
+    return [c.brand,c.name,c.wrapper,c.note,c.binder,c.filler,c.origin].concat(Object.keys(c.flavor)).join(" ").toLowerCase().includes(q);
   });
 
-  const heading = state.flow === "smoking" ? "What are you smoking?" : (state.selectedCocktail ? "Choose the smoke" : "Browse cigars");
+  let ranking = {};
+  if(state.selectedCocktail){
+    items = items.map(function(cigar){
+      return {item:cigar, result:compatibility(cigar,state.selectedCocktail)};
+    }).sort(function(a,b){return b.result.score-a.result.score;});
+    items.forEach(function(row,index){
+      ranking[row.item.id] = {rank:index+1,score:row.result.score};
+    });
+    items = items.map(function(row){return row.item;});
+  }
+
+  const heading = state.flow === "smoking" ? "What are you smoking?" : (state.selectedCocktail ? "Recommended smokes" : "Browse cigars");
 
   layout(
-    '<div class="pagehead"><span class="eyebrow">Cigar library</span><h1>' + heading + '</h1></div>' +
-    (state.selectedCocktail ? '<div class="contextpill">Pairing with <b>' + esc(state.selectedCocktail.name) + '</b></div>' : '') +
+    '<div class="pagehead"><span class="eyebrow">Cigar library</span><h1>' + heading + '</h1>' +
+      (state.selectedCocktail ? '<p>Ranked automatically for <b>' + esc(state.selectedCocktail.name) + '</b> using flavor, intensity, contrast and palate structure.</p>' : '') +
+    '</div>' +
+    (state.selectedCocktail ? '<div class="contextpill">Best match is shown first. Tap any cigar to see the full pairing breakdown.</div>' : '') +
     '<input class="search" id="cigar-search" value="' + esc(state.cigarQuery) + '" placeholder="Search brand, wrapper or flavor">' +
-    '<div class="list">' + items.map(function(x){return listCard(x,"cigar");}).join("") + '</div>' +
-    '<p class="data-note">Cigar tasting profiles are sample data for the MVP and should be verified before production use.</p>'
+    '<div class="list">' + items.map(function(x){return listCard(x,"cigar",ranking[x.id]);}).join("") + '</div>' +
+    '<p class="data-note">' + esc(D.dataNote || "") + '</p>'
   );
 
   document.querySelector("#cigar-search").addEventListener("input",function(e){
@@ -244,17 +267,30 @@ function renderCigars(){
 
 function renderCocktails(){
   const q = state.cocktailQuery.toLowerCase();
-  const items = D.cocktails.filter(function(c){
+  let items = D.cocktails.filter(function(c){
     return [c.name,c.style,c.base,c.note].concat(c.recipe,Object.keys(c.flavor)).join(" ").toLowerCase().includes(q);
   });
 
-  const heading = state.flow === "drinking" ? "What are you drinking?" : (state.selectedCigar ? "Choose the pour" : "Browse cocktails");
+  let ranking = {};
+  if(state.selectedCigar){
+    items = items.map(function(cocktail){
+      return {item:cocktail, result:compatibility(state.selectedCigar,cocktail)};
+    }).sort(function(a,b){return b.result.score-a.result.score;});
+    items.forEach(function(row,index){
+      ranking[row.item.id] = {rank:index+1,score:row.result.score};
+    });
+    items = items.map(function(row){return row.item;});
+  }
+
+  const heading = state.flow === "drinking" ? "What are you drinking?" : (state.selectedCigar ? "Recommended pours" : "Browse cocktails");
 
   layout(
-    '<div class="pagehead"><span class="eyebrow">Cocktail library</span><h1>' + heading + '</h1></div>' +
-    (state.selectedCigar ? '<div class="contextpill">Pairing with <b>' + esc(state.selectedCigar.name) + '</b></div>' : '') +
+    '<div class="pagehead"><span class="eyebrow">Cocktail library</span><h1>' + heading + '</h1>' +
+      (state.selectedCigar ? '<p>Ranked automatically for <b>' + esc(state.selectedCigar.name) + '</b> using the Puff ’n Pour pairing model.</p>' : '') +
+    '</div>' +
+    (state.selectedCigar ? '<div class="contextpill">Best match is shown first. Tap any cocktail to see the full pairing breakdown.</div>' : '') +
     '<input class="search" id="cocktail-search" value="' + esc(state.cocktailQuery) + '" placeholder="Search cocktail, spirit or flavor">' +
-    '<div class="list">' + items.map(function(x){return listCard(x,"cocktail");}).join("") + '</div>'
+    '<div class="list">' + items.map(function(x){return listCard(x,"cocktail",ranking[x.id]);}).join("") + '</div>'
   );
 
   document.querySelector("#cocktail-search").addEventListener("input",function(e){
@@ -278,6 +314,15 @@ function renderCocktails(){
       render();
     });
   });
+}
+
+function sourceLinks(cigar){
+  if(!cigar.sources || !cigar.sources.length) return "";
+  return '<div class="sources"><span class="micro">Profile sources</span>' +
+    cigar.sources.map(function(s){
+      return '<a href="' + esc(s.url) + '" target="_blank" rel="noopener noreferrer">' + esc(s.label) + ' ↗</a>';
+    }).join("") +
+  '</div>';
 }
 
 function saveCurrent(rating,note){
@@ -316,7 +361,7 @@ function renderResult(){
       metric("Palate structure",result.cleanse) +
     '</section>' +
     '<section class="duo">' +
-      '<article><span class="micro">' + esc(cigar.brand) + '</span><h2>' + esc(cigar.name) + '</h2><p>' + esc(cigar.note) + '</p><div class="tags">' + tags(cigar.flavor) + '</div></article>' +
+      '<article><span class="micro">' + esc(cigar.brand) + '</span><h2>' + esc(cigar.name) + '</h2><p>' + esc(cigar.note) + '</p><p class="sourcefacts">' + esc(cigar.vitola) + ' · ' + esc(cigar.wrapper) + ' wrapper · ' + esc(cigar.origin) + '</p><div class="tags">' + tags(cigar.flavor) + '</div>' + sourceLinks(cigar) + '</article>' +
       '<article><span class="micro">' + esc(cocktail.style) + '</span><h2>' + esc(cocktail.name) + '</h2><p>' + esc(cocktail.note) + '</p><ul>' + cocktail.recipe.map(function(x){return '<li>'+esc(x)+'</li>';}).join("") + '</ul></article>' +
     '</section>' +
     '<section class="feedback">' +
