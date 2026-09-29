@@ -7,8 +7,8 @@
 .family-graph-panel { overflow:hidden; }
 .cocktail-family-graph { width:100%; height:auto; display:block; margin:4px 0; overflow:visible; }
 .family-edge { stroke:#4a504e; stroke-width:2.2; opacity:.82; }
-.family-parent-edge { stroke:var(--accent); }
-.family-child-edge { stroke:var(--green); }
+.family-source-edge { stroke:var(--accent); }
+.family-variation-edge { stroke:var(--green); }
 .family-peer-edge { stroke:#5f6663; stroke-dasharray:6 6; opacity:.65; }
 .family-edge-label { fill:#8d9691; font-size:10px; text-anchor:middle; paint-order:stroke; stroke:var(--panel); stroke-width:5px; stroke-linejoin:round; }
 .family-node circle { fill:#1b1f1e; stroke:#48504d; stroke-width:2; transition:.18s ease; }

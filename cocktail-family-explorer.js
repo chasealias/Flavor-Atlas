@@ -4,7 +4,7 @@
   if (!DATA?.cocktails || !DATA?.cocktailFamilyTaxonomy) return;
 
   state.relationshipMode = state.relationshipMode || 'cocktails';
-  state.familyCocktailId = state.familyCocktailId || DATA.cocktails.find(c => c.name === 'Negroni')?.id || DATA.cocktails[0]?.id || null;
+  state.familyCocktailId = state.familyCocktailId || DATA.cocktails.find(c => c.id === 'IBA-020')?.id || DATA.cocktails[0]?.id || null;
   state.familyFilter = state.familyFilter || 'All';
 
   const baseLayoutForFamilyGraph = layout;
@@ -20,10 +20,6 @@
     return DATA.cocktailFamilyTaxonomy.find(f => f.id === id) || DATA.cocktailFamilyTaxonomy.find(f => f.id === 'other');
   }
 
-  function familyCocktail() {
-    return DATA.cocktails.find(c => c.id === state.familyCocktailId) || DATA.cocktails[0];
-  }
-
   function vectorSimilarity(a, b) {
     if (typeof faVectorSimilarity === 'function') return faVectorSimilarity(a, b);
     const keys = ['Sweetness','Bitterness','Acidity','Herbal','Earthiness','Umami','Body'];
@@ -36,13 +32,23 @@
 
   function explicitConnections(c) {
     return (DATA.cocktailLineage || [])
-      .filter(e => e.from === c.name || e.to === c.name)
+      .filter(e => e.fromId === c.id || e.toId === c.id)
       .map(e => ({
         edge:e,
-        item:DATA.cocktails.find(x => x.name === (e.from === c.name ? e.to : e.from)),
-        direction:e.from === c.name ? 'out' : 'in'
+        item:DATA.cocktails.find(x => x.id === (e.fromId === c.id ? e.toId : e.fromId)),
+        direction:e.directed ? (e.fromId === c.id ? 'out' : 'in') : 'relative'
       }))
       .filter(x => x.item);
+  }
+
+  function connectionLabel({edge, direction}) {
+    return direction === 'in' ? `Source of ${edge.relation}` : edge.relation;
+  }
+
+  function connectionTitle(edge) {
+    const from = DATA.cocktails.find(c => c.id === edge.fromId);
+    const to = DATA.cocktails.find(c => c.id === edge.toId);
+    return `${from.name} ${edge.directed ? '→' : '↔'} ${to.name}`;
   }
 
   function sameFamilyRelatives(c, limit = 6) {
@@ -69,7 +75,7 @@
 
     const edges = positioned.map(n => {
       const relation = n.edge?.relation || 'related';
-      const klass = n.direction === 'peer' ? 'family-peer-edge' : (n.direction === 'in' ? 'family-parent-edge' : 'family-child-edge');
+      const klass = n.direction === 'peer' ? 'family-peer-edge' : n.direction === 'relative' ? 'family-relative-edge' : n.direction === 'in' ? 'family-source-edge' : 'family-variation-edge';
       return `<line x1="${cx}" y1="${cy}" x2="${n.x.toFixed(1)}" y2="${n.y.toFixed(1)}" class="family-edge ${klass}" />
         <text x="${((cx+n.x)/2).toFixed(1)}" y="${((cy+n.y)/2).toFixed(1)}" class="family-edge-label">${esc(relation)}</text>`;
     }).join('');
@@ -78,7 +84,7 @@
       <g class="family-node family-node-related" data-family-cocktail="${esc(n.item.id)}" tabindex="0" role="button" aria-label="Explore ${esc(n.item.name)}">
         <circle cx="${n.x.toFixed(1)}" cy="${n.y.toFixed(1)}" r="43" />
         <text x="${n.x.toFixed(1)}" y="${(n.y-5).toFixed(1)}">${esc(n.item.name.split(' ').slice(0,2).join(' '))}</text>
-        <text x="${n.x.toFixed(1)}" y="${(n.y+13).toFixed(1)}" class="node-meta">${esc(n.direction === 'in' ? 'ancestor/parent' : n.direction === 'out' ? 'variation/child' : n.item.structuralFamily)}</text>
+        <text x="${n.x.toFixed(1)}" y="${(n.y+13).toFixed(1)}" class="node-meta">${esc(n.direction === 'peer' ? n.item.structuralFamily : connectionLabel(n))}</text>
       </g>`).join('');
 
     return `<svg class="cocktail-family-graph" viewBox="0 0 ${width} ${height}" aria-label="Cocktail family graph for ${esc(c.name)}">
@@ -126,17 +132,14 @@
   }
 
   function renderCocktailMode() {
-    const c = familyCocktail();
-    const fam = familyRecord(c.structuralFamilyId);
-    const connections = explicitConnections(c);
     const filteredCocktails = state.familyFilter === 'All'
       ? DATA.cocktails
       : DATA.cocktails.filter(x => x.structuralFamilyId === state.familyFilter);
 
-    if (!filteredCocktails.some(x => x.id === c.id) && filteredCocktails.length) {
-      state.familyCocktailId = filteredCocktails[0].id;
-      return renderCocktailMode();
-    }
+    const c = filteredCocktails.find(x => x.id === state.familyCocktailId) || filteredCocktails[0];
+    state.familyCocktailId = c?.id || null;
+    const fam = familyRecord(c?.structuralFamilyId || state.familyFilter);
+    const connections = c ? explicitConnections(c) : [];
 
     layout(`
       ${relationshipTabs()}
@@ -147,20 +150,21 @@
 
       <div class="family-toolbar panel">
         <label for="family-cocktail">Explore cocktail</label>
-        <select id="family-cocktail" aria-label="Choose cocktail">
+        <select id="family-cocktail" aria-label="Choose cocktail" ${c ? '' : 'disabled'}>
+          ${c ? '' : '<option value="">No cocktails in this family</option>'}
           ${filteredCocktails.map(x => `<option value="${esc(x.id)}" ${x.id === c.id ? 'selected' : ''}>${esc(x.name)} · ${esc(x.structuralFamily)}</option>`).join('')}
         </select>
         <button class="chip ${state.familyFilter === 'All' ? 'active' : ''}" data-family-filter="All">All families</button>
       </div>
 
-      <section class="family-graph-layout">
+      ${c ? `<section class="family-graph-layout">
         <article class="panel family-graph-panel">
           <div class="graph-panel-head">
             <div><span class="eyebrow">Lineage + structural relatives</span><h4>${esc(c.name)}</h4></div>
             <span class="tag role">${esc(c.structuralFamily)}</span>
           </div>
           ${familyGraphSvg(c)}
-          <p class="meta graph-help">Solid lineage edges are curated Flavor Atlas relationships. Peer nodes fill unused space with high-similarity cocktails from the same structural family.</p>
+          <p class="meta graph-help">Solid edges show curated variations or symmetric structural relationships; only variations have a source. Dashed peer nodes fill unused space with high-similarity cocktails from the same structural family.</p>
         </article>
 
         <article class="panel family-definition-panel">
@@ -171,14 +175,17 @@
           <div class="family-stat"><strong>${DATA.cocktailFamilySummary.counts[fam.id] || 0}</strong><span>cocktails in this family</span></div>
           <div class="family-stat"><strong>${connections.length}</strong><span>explicit lineage edges for ${esc(c.name)}</span></div>
           <button class="chip" data-open-family-profile="${esc(c.id)}">Open cocktail profile</button>
-          ${connections.length ? `<div class="lineage-notes"><h5>Recorded lineage</h5>${connections.map(({edge,item,direction}) => `
+          ${connections.length ? `<div class="lineage-notes"><h5>Recorded lineage</h5>${connections.map(({edge,item}) => `
             <button class="lineage-note" data-family-cocktail="${esc(item.id)}">
-              <strong>${esc(direction === 'in' ? `${edge.from} → ${edge.to}` : `${edge.from} → ${edge.to}`)}</strong>
+              <strong>${esc(connectionTitle(edge))}</strong>
               <span>${esc(edge.relation)} · ${esc(edge.confidence)}</span>
               <small>${esc(edge.why)}</small>
-            </button>`).join('')}</div>` : '<p class="meta lineage-empty">No explicit parent/child edge is recorded yet. The graph is showing structural relatives from the same family.</p>'}
+            </button>`).join('')}</div>` : '<p class="meta lineage-empty">No explicit connection is recorded yet. The graph is showing structural relatives from the same family.</p>'}
         </article>
-      </section>
+      </section>` : `<section class="panel family-empty" role="status">
+        <h4>${esc(fam.name)}</h4>
+        <p>No cocktails are assigned to this family yet. Choose another family or use All families to continue exploring.</p>
+      </section>`}
 
       <div class="section-head family-index-heading"><div><span class="eyebrow">Family Index</span><h3>${DATA.cocktailFamilyTaxonomy.length} structural families</h3></div><p>${DATA.cocktailFamilySummary.edgeCount} curated lineage edges across ${DATA.cocktailFamilySummary.cocktailCount} cocktails.</p></div>
       <section class="family-card-grid">${familyCards()}</section>`);
@@ -248,7 +255,7 @@
           <article class="panel">
             <span class="eyebrow">Lineage</span>
             <h4>${connections.length ? `${connections.length} explicit connection${connections.length === 1 ? '' : 's'}` : 'No explicit lineage edge yet'}</h4>
-            ${connections.length ? connections.map(({edge,item}) => `<button class="lineage-note compact" data-profile-relative="${esc(item.id)}"><strong>${esc(item.name)}</strong><span>${esc(edge.relation)}</span><small>${esc(edge.why)}</small></button>`).join('') : '<p class="meta">This cocktail is classified structurally, but Flavor Atlas is not claiming a specific historical parent or child yet.</p>'}
+            ${connections.length ? connections.map(({edge,item,direction}) => `<button class="lineage-note compact" data-profile-relative="${esc(item.id)}"><strong>${esc(item.name)}</strong><span>${esc(connectionLabel({edge,direction}))}</span><small>${esc(edge.why)}</small></button>`).join('') : '<p class="meta">This cocktail is classified structurally, but Flavor Atlas is not claiming a specific historical parent or child yet.</p>'}
           </article>
         </section>`);
 

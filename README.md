@@ -447,3 +447,23 @@ Flavor Atlas records reasoning.
 The craft of bartending lives in the decisions behind the recipe.
 
 Flavor Atlas exists to preserve those decisions, connect them, and make them useful.
+## Local validation
+
+This is a static JavaScript application with no build step or package dependencies.
+With Node.js 18 or newer, run the cocktail-family regression suite:
+
+```sh
+node --test tests/*.test.js
+```
+
+The suite loads production data in `index.html` order and checks ID-based lineage,
+relationship semantics, family classifications, and graph/profile rendering with a
+minimal DOM harness. It also exercises keyboard recentering and empty-filter recovery.
+It does not replace a visual browser check. For a manual smoke test, serve this directory
+with a static HTTP server, open Relationships, select Sling, explore both ends of a
+relative relationship, and open a cocktail profile.
+
+Lineage endpoints use existing cocktail IDs (`fromId` / `toId`), never display names.
+Preserve existing IDs when adding or renaming canon records. Relative edges are
+symmetric (`directed: false`); variations and riffs retain their source direction.
+Curated family overrides take priority over the descriptive-text fallback rules.
