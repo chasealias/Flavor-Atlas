@@ -140,3 +140,9 @@ a { color: inherit; }
   .profile-panel { min-height:0; }
   .ingredient-card .card-open { width:100%; }
 }
+
+/* Ingredient references preserve the original recipe wording and quantities. */
+.recipe-ingredient-link { background:none; border:0; padding:0; color:var(--accent); font:inherit; text-align:left; text-decoration:underline; text-underline-offset:3px; cursor:pointer; }
+.recipe-ingredient-link:focus-visible { outline:2px solid var(--accent); outline-offset:4px; }
+.recipe-ingredient-options { display:block; margin-top:6px; font-size:.8rem; }
+.ingredient-usage { margin-bottom:16px; }

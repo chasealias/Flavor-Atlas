@@ -467,3 +467,24 @@ Lineage endpoints use existing cocktail IDs (`fromId` / `toId`), never display n
 Preserve existing IDs when adding or renaming canon records. Relative edges are
 symmetric (`directed: false`); variations and riffs retain their source direction.
 Curated family overrides take priority over the descriptive-text fallback rules.
+
+## Recipe ingredient catalog
+
+`ingredient-catalog.js` adds recipe-reference ingredients after recipe encodings load.
+It preserves the original recipes and 24 sensory ingredient records. New references
+carry fixed IDs, provenance, aliases, recorded recipe roles, and reverse cocktail links.
+They have no fabricated sensory vectors and are excluded from scored ingredient
+similarity/substitution results until encoded. Brand, expression, and preparation
+variants remain separate. Alternative and combined recipe rows retain their meaning.
+
+Run the coverage audit with:
+
+```sh
+node scripts/audit-ingredients.js
+node --test tests/*.test.js
+```
+
+The audit exits unsuccessfully for missing links, invalid IDs, or duplicate ingredient
+IDs. When adding a recipe label, explicitly bind it to existing IDs or append a new
+reference with a new ID. Never renumber existing ingredients. See
+[the ingredient audit](docs/ingredient-audit.md) for scope and remaining detail gaps.

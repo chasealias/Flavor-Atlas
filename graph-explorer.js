@@ -20,7 +20,13 @@ function faJaccard(a = [], b = []) {
   return intersection / (A.size + B.size - intersection || 1);
 }
 
+function faHasSensoryProfile(item) {
+  return ['Sweetness','Bitterness','Acidity','Herbal','Earthiness','Umami','Body']
+    .every(key => Number.isFinite(item?.vector?.[key]));
+}
+
 function faVectorSimilarity(a, b) {
+  if (!faHasSensoryProfile(a) || !faHasSensoryProfile(b)) return null;
   const keys = ['Sweetness', 'Bitterness', 'Acidity', 'Herbal', 'Earthiness', 'Umami', 'Body'];
   const distance = Math.sqrt(keys.reduce((sum, key) => {
     const d = Number(a?.vector?.[key] || 0) - Number(b?.vector?.[key] || 0);
@@ -40,6 +46,7 @@ function faPairingSignal(a, b) {
 }
 
 function faAffinity(a, b) {
+  if (!faHasSensoryProfile(a) || !faHasSensoryProfile(b)) return null;
   const vector = faVectorSimilarity(a, b);
   const roles = faJaccard(a.roles, b.roles);
   const flavors = faJaccard(a.flavors, b.flavors);
@@ -49,6 +56,7 @@ function faAffinity(a, b) {
 }
 
 function faSubstitutionScore(a, b) {
+  if (!faHasSensoryProfile(a) || !faHasSensoryProfile(b)) return null;
   const vector = faVectorSimilarity(a, b);
   const roles = faJaccard(a.roles, b.roles);
   const flavors = faJaccard(a.flavors, b.flavors);
@@ -71,16 +79,18 @@ function faSubReason(a, b) {
 }
 
 function faGraphNeighbors(selected, count = 8) {
+  if (!faHasSensoryProfile(selected)) return [];
   return DATA.ingredients
-    .filter(item => item.id !== selected.id)
+    .filter(item => item.id !== selected.id && faHasSensoryProfile(item))
     .map(item => ({ item, score: faAffinity(selected, item), pairing: Math.max(faPairingSignal(selected, item), faPairingSignal(item, selected)) }))
     .sort((a, b) => b.score - a.score)
     .slice(0, count);
 }
 
 function faSubstitutes(selected, count = 5) {
+  if (!faHasSensoryProfile(selected)) return [];
   return DATA.ingredients
-    .filter(item => item.id !== selected.id)
+    .filter(item => item.id !== selected.id && faHasSensoryProfile(item))
     .map(item => ({ item, score: faSubstitutionScore(selected, item) }))
     .sort((a, b) => b.score - a.score)
     .slice(0, count);
@@ -159,7 +169,7 @@ renderRelationships = function() {
     <section class="graph-layout">
       <article class="panel graph-panel">
         <div class="graph-panel-head"><div><span class="eyebrow">Flavor Graph</span><h4>${esc(selected.name)}</h4></div><span class="tag role">${esc(selected.category)}</span></div>
-        ${faGraphSvg(selected, neighbors)}
+        ${faHasSensoryProfile(selected) ? faGraphSvg(selected, neighbors) : '<p class="meta" role="status">This recipe reference has no sensory profile yet. Similarity and substitution rankings are unavailable until it is encoded.</p>'}
         <p class="meta graph-help">Tap any outer node to make it the center.</p>
         ${faRecordedNotes(selected)}
       </article>
@@ -169,6 +179,7 @@ renderRelationships = function() {
         <h4>Replace ${esc(selected.name)}</h4>
         <p class="meta">These are structural candidates, not claims that two ingredients taste identical. Humans invented nuance, then immediately tried to automate it.</p>
         <div class="sub-list">
+          ${!faHasSensoryProfile(selected) ? '<p class="meta">No scored substitutions: sensory encoding pending.</p>' : ''}
           ${substitutes.map(({item, score}, index) => `
             <button class="sub-card" data-graph-node="${esc(item.id)}">
               <span class="sub-rank">${index + 1}</span>
