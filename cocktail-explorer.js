@@ -17,6 +17,14 @@ layout = function(content) {
   if (footer) footer.textContent = 'Flavor Atlas V0.5 · Recipes record outcomes. Flavor Atlas records reasoning.';
 };
 
+function recipeIngredientLinks(label, ref) {
+  if (!ref?.ingredientIds?.length) return `<span>${esc(label)}</span>`;
+  const ingredients = ref.ingredientIds.map(id => DATA.ingredients.find(i => i.id === id)).filter(Boolean);
+  if (!ingredients.length) return `<span>${esc(label)}</span>`;
+  if (ingredients.length === 1) return `<button class="recipe-ingredient-link" data-recipe-ingredient="${esc(ingredients[0].id)}">${esc(label)}</button>`;
+  return `<span>${esc(label)}<span class="recipe-ingredient-options">${ingredients.map(i => `<button class="recipe-ingredient-link" data-recipe-ingredient="${esc(i.id)}">${esc(i.name)}</button>`).join(ref.kind === 'alternative' ? ' or ' : ' + ')}</span></span>`;
+}
+
 function cocktailTags(items = []) {
   return `<div class="tags">${items.map(item => `<span class="tag">${esc(item)}</span>`).join('')}</div>`;
 }
@@ -157,7 +165,7 @@ function renderCocktailProfile() {
     <section class="two-col">
       <div class="panel">
         <h4>Build</h4>
-        <div class="spec-list">${(c.specs || []).map(([measure, ingredient]) => `<div class="spec-row"><strong>${esc(measure)}</strong><span>${esc(ingredient)}</span></div>`).join('')}</div>
+        <div class="spec-list">${(c.specs || []).map(([measure, ingredient], index) => `<div class="spec-row"><strong>${esc(measure)}</strong>${recipeIngredientLinks(ingredient, c.ingredientRefs?.[index])}</div>`).join('')}</div>
         <div class="service-block">
           <p class="meta"><strong>Method:</strong> ${esc(c.method || 'Not recorded')}</p>
           <p class="meta"><strong>Glassware:</strong> ${esc(c.glassware || 'Not recorded')}</p>
@@ -173,6 +181,13 @@ function renderCocktailProfile() {
       <div class="panel">${(c.functions || []).length ? `<div class="function-list">${c.functions.map(([ingredient, role]) => `<div class="function-row"><strong>${esc(role)}</strong><span>${esc(ingredient)}</span></div>`).join('')}</div>` : '<p class="meta">Functional roles not encoded yet.</p>'}</div>
       <div class="panel"><h4>Flavor Progression</h4>${(c.progression || []).length ? `<div class="progression">${cocktailProgression(c)}</div>` : '<p class="meta">Flavor progression not encoded yet.</p>'}</div>
     </section>` : referencePanel(c)}`);
+
+  document.querySelectorAll('[data-recipe-ingredient]').forEach(btn => btn.addEventListener('click', () => {
+    state.selectedIngredientId = btn.dataset.recipeIngredient;
+    state.view = 'ingredient';
+    render();
+    window.scrollTo({top:0, behavior:'smooth'});
+  }));
 
   document.querySelector('[data-back-cocktails]').addEventListener('click', () => {
     state.view = 'cocktails';

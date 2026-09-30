@@ -67,6 +67,7 @@ function hero() {
 }
 
 function metricBars(vector) {
+  if (!vector) return '<p class="meta">Sensory profile not encoded yet.</p>';
   return Object.entries(vector).map(([name, value]) => `
     <div class="metric">
       <div class="metric-head"><span>${esc(name)}</span><strong>${value}/10</strong></div>
@@ -86,7 +87,7 @@ function detailList(items = [], emptyText = 'No entries yet.') {
 function ingredientCard(ing) {
   return `
     <article class="card ingredient-card">
-      <div class="meta">${esc(ing.id)} · ${esc(ing.category)}</div>
+      <div class="meta">${esc(ing.id)} · ${esc(ing.category)}${ing.recordStatus === 'reference' ? ' · Recipe reference' : ''}</div>
       <h4>${esc(ing.name)}</h4>
       <div class="meta">${esc(ing.region)}</div>
       ${tags(ing.roles, 'role')}
@@ -128,6 +129,7 @@ function renderIngredients() {
     const roleOk = state.roleFilter === 'All' || ing.roles.includes(state.roleFilter);
     const haystack = [
       ing.name,
+      ...(ing.aliases || []),
       ing.category,
       ing.region,
       ing.notes,
@@ -143,7 +145,7 @@ function renderIngredients() {
   });
 
   layout(`
-    <div class="section-head"><div><span class="eyebrow">Ingredient Explorer</span><h3>Search by flavor and function</h3></div><p>Search names, roles, sensory notes, pairings, substitutes and cautions.</p></div>
+    <div class="section-head"><div><span class="eyebrow">Ingredient Explorer</span><h3>Search by flavor and function</h3></div><p>${DATA.ingredients.length} ingredients. Search names, aliases, roles, and sensory notes. Recipe references are awaiting sensory encoding.</p></div>
     <div class="searchbar"><input id="ingredient-search" value="${esc(state.ingredientQuery)}" placeholder="Try: earthy, bridge, fortified wine, honey…" aria-label="Search ingredients"></div>
     <div class="filters">
       ${['All','Foundation','Structure','Bridge','Modifier','Sweetener','Aromatic','Dynamic Modifier'].map(role => `<button class="chip ${state.roleFilter===role?'active':''}" data-role="${esc(role)}">${esc(role)}</button>`).join('')}
@@ -193,10 +195,21 @@ function renderIngredientProfile() {
       <div>
         <span class="eyebrow">${esc(ing.id)} · ${esc(ing.category)}</span>
         <h3>${esc(ing.name)}</h3>
-        <p class="meta">${esc(ing.region)}</p>
+        <p class="meta">${esc(ing.region)}${ing.recordStatus === 'reference' ? ' · Recipe reference · Sensory encoding pending' : ''}</p>
       </div>
       <p>${esc(ing.notes)}</p>
     </div>
+
+    ${ing.aliases?.length ? `<p class="meta">Also recorded as: ${ing.aliases.map(esc).join(', ')}</p>` : ''}
+    ${ing.provenance ? `<p class="meta">Source: ${esc(ing.provenance)}</p>` : ''}
+    <section class="panel ingredient-usage">
+      <h4>Used in cocktails</h4>
+      <p class="meta">Includes ingredients offered as alternatives; open the recipe for quantities and preparation.</p>
+      <div class="tags">${(ing.usedIn || []).map(id => {
+        const c = DATA.cocktails.find(c => c.id === id);
+        return c ? `<button class="chip" data-ingredient-cocktail="${esc(c.id)}">${esc(c.name)}</button>` : '';
+      }).join('') || '<p class="meta">No recipe specifications linked yet.</p>'}</div>
+    </section>
 
     <section class="two-col ingredient-profile-top">
       <div class="panel">
@@ -204,19 +217,19 @@ function renderIngredientProfile() {
         ${metricBars(ing.vector)}
       </div>
       <div class="panel">
-        <h4>Functional Roles</h4>
-        ${tags(ing.roles, 'role')}
+        <h4>${ing.recordStatus === 'reference' ? 'Recorded Recipe Roles' : 'Functional Roles'}</h4>
+        ${ing.roles.length ? tags(ing.roles, 'role') : '<p class="meta">No individual ingredient role encoded yet.</p>'}
         <div class="profile-section">
           <h5>Flavor</h5>
-          ${tags(ing.flavors)}
+          ${ing.flavors.length ? tags(ing.flavors) : '<p class="meta">Not encoded yet.</p>'}
         </div>
         <div class="profile-section">
           <h5>Aroma</h5>
-          ${tags(ing.aroma)}
+          ${ing.aroma.length ? tags(ing.aroma) : '<p class="meta">Not encoded yet.</p>'}
         </div>
         <div class="profile-section">
           <h5>Texture</h5>
-          ${tags(ing.texture)}
+          ${ing.texture.length ? tags(ing.texture) : '<p class="meta">Not encoded yet.</p>'}
         </div>
       </div>
     </section>
@@ -238,6 +251,13 @@ function renderIngredientProfile() {
         ${detailList(ing.cautions || [], 'No cautions recorded yet.')}
       </article>
     </section>`);
+
+  document.querySelectorAll('[data-ingredient-cocktail]').forEach(btn => btn.addEventListener('click', () => {
+    state.selectedCocktailId = btn.dataset.ingredientCocktail;
+    state.view = 'cocktail';
+    render();
+    window.scrollTo({top:0, behavior:'smooth'});
+  }));
 
   document.querySelector('[data-back-ingredients]').addEventListener('click', () => {
     state.view = 'ingredients';
